@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+    <h3 class="center">⚙️ 종목 관리</h3>
+
+    <table class="striped">
+        <thead>
+            <tr>
+                <th>종목 코드</th>
+                <th>별칭</th>
+                <th>수정</th>
+                <th>삭제</th>
+            </tr>
+        </thead>
+        <tbody id="stockList">
+            {% for ticker, alias in tickers %}
+            <tr>
+                <td>{{ ticker }}</td>
+                <td><input type="text" id="alias-{{ ticker }}" value="{{ alias }}"></td>
+                <td><button onclick="updateAlias('{{ ticker }}')" class="btn blue">수정</button></td>
+                <td><button onclick="removeTicker('{{ ticker }}')" class="btn red">삭제</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h4 class="center">새 종목 추가</h4>
+    <input type="text" id="newTicker" placeholder="종목 코드 입력">
+    <input type="text" id="newAlias" placeholder="별칭 입력">
+    <button onclick="addTicker()" class="btn blue">추가</button>
+
+    <script>
+        async function addTicker() {
+            let ticker = document.getElementById("newTicker").value;
+            let alias = document.getElementById("newAlias").value;
+            await fetch("/manage", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ticker, alias})
+            });
+            location.reload();
+        }
+
+        async function updateAlias(ticker) {
+            let alias = document.getElementById("alias-" + ticker).value;
+            await fetch("/manage", {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ticker, alias})
+            });
+            location.reload();
+        }
+
+        async function removeTicker(ticker) {
+            await fetch("/manage", {
+                method: "DELETE",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ticker})
+            });
+            location.reload();
+        }
+    </script>
+{% endblock %}

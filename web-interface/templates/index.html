@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="center">📊 Stock AI System</h3>
+<p class="center">AI 기반 주식 분석 시스템</p>
+
+<div class="row">
+    <div class="col s12 m6">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">📊 대시보드</span>
+                <p>주식 데이터 분석 및 AI 예측 결과를 확인하세요.</p>
+            </div>
+            <div class="card-action">
+                <a href="/dashboard" class="btn blue">대시보드 보기</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col s12 m6">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">🎨 Comfy UI</span>
+                <p>AI 기반 이미지 생성 툴을 사용해보세요.</p>
+            </div>
+            <div class="card-action">
+                <a href="/comfy-ui/" class="btn blue">Comfy UI 실행</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col s12 m6">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">📘 Jupyter Notebook</span>
+                <p>데이터 분석을 위한 Jupyter Notebook 실행</p>
+            </div>
+            <div class="card-action">
+                <a href="/jupyter/" class="btn blue">Jupyter 실행</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

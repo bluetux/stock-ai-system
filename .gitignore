@@ -1,0 +1,7 @@
+__pycache__/
+.env
+venv
+data/
+!data/processed/
+!data/raw/
+comfy-ui/
