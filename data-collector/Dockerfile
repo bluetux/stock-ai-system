@@ -9,6 +9,13 @@ RUN apt-get update && apt-get install -y cron \
     libxcb-dri3-0 libxcomposite1 libxdamage1 libxfixes3 \
     libxrandr2 libgbm1 libgtk-3-0 \
     && rm -rf /var/lib/apt/lists/*
+
+    # 시간대 설정
+RUN apt-get update && apt-get install -y tzdata \
+&& ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
+&& echo "Asia/Seoul" > /etc/timezone \
+&& apt-get clean
+
 # Python 라이브러리 설치
 WORKDIR /app
 COPY requirements.txt .

@@ -5,3 +5,4 @@ data/
 !data/processed/
 !data/raw/
 comfy-ui/
+data-collector/tmp/

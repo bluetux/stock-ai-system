@@ -19,6 +19,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && git lfs install
 
+    # 시간대 설정
+RUN apt-get update && apt-get install -y tzdata \
+&& ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
+&& echo "Asia/Seoul" > /etc/timezone \
+&& apt-get clean
+# 시간대 설정
+RUN apt-get update && apt-get install -y tzdata \
+    && ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
+    && echo "Asia/Seoul" > /etc/timezone \
+    && apt-get clean
+
 USER 1000:1000
 WORKDIR /home/user/app
 

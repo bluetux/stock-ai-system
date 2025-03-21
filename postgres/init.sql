@@ -21,10 +21,11 @@ END $$;
 -- ✅ 관심 종목 테이블
 CREATE TABLE IF NOT EXISTS watchlist (
     id SERIAL PRIMARY KEY,
-    ticker VARCHAR(20) UNIQUE NOT NULL,
+    ticker VARCHAR(10) UNIQUE NOT NULL,
     alias VARCHAR(50) DEFAULT '',
     is_active BOOLEAN DEFAULT TRUE,
-    data_source VARCHAR(20) DEFAULT 'NAVER',
+    data_source VARCHAR(10) DEFAULT 'NAVER',
+    is_open BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -90,12 +91,12 @@ INSERT INTO stock_groups (name) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- ✅ 초기 관심 종목
-INSERT INTO watchlist (ticker, alias, is_active, data_source, created_at)
+INSERT INTO watchlist (ticker, alias, is_active, data_source, is_open)
 VALUES
-    ('NVDL', 'NVIDIA ETF', TRUE, 'NAVER', NOW()),
-    ('012450.KS', '한화에어로스페이스', TRUE, 'NAVER', NOW()),
-    ('^IXIC', 'NASDAQ Composite', TRUE, 'NAVER', NOW()),
-    ('^KQ11', 'KOSDAQ Index', TRUE, 'NAVER', NOW()),
-    ('^GSPC', 'S&P 500', TRUE, 'NAVER', NOW()),
-    ('AAPL', 'Apple Inc.', TRUE, 'NAVER', NOW())
+    ('NVDL', 'NVIDIA ETF', TRUE, 'NAVER', TRUE),
+    ('012450.KS', '한화에어로스페이스', TRUE, 'NAVER', TRUE),
+    ('^IXIC', 'NASDAQ Composite', TRUE, 'NAVER', TRUE),
+    ('^KQ11', 'KOSDAQ Index', TRUE, 'NAVER', TRUE),
+    ('^GSPC', 'S&P 500', TRUE, 'NAVER', TRUE),
+    ('AAPL', 'Apple Inc.', TRUE, 'NAVER', TRUE)
 ON CONFLICT (ticker) DO NOTHING;

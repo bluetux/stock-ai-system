@@ -7,6 +7,12 @@ FROM postgres:latest
 # RUN groupmod -g ${PG_GID} postgres && \
 #     usermod -u ${PG_UID} -g ${PG_GID} postgres
 
+# 시간대 설정
+RUN apt-get update && apt-get install -y tzdata \
+    && ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
+    && echo "Asia/Seoul" > /etc/timezone \
+    && apt-get clean
+
 COPY entrypoint.sh /docker-entrypoint-initdb.d/entrypoint.sh
 RUN chmod +x /docker-entrypoint-initdb.d/entrypoint.sh
 
