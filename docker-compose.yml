@@ -23,21 +23,24 @@ services:
     networks:
       - stock-network
     env_file:
-      - .env
+      - ./postgres/.env
+    user: "1001:1001"
+    ports:
+      - "5432:5432"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres/entrypoint.sh:/docker-entrypoint-initdb.d/entrypoint.sh
     deploy:
       resources:
         limits:
           memory: 2G
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 10s
       retries: 5
       timeout: 5s
     restart: always
-    user: "1001:1001"
 
   collector:
     image: data-collector-img
@@ -134,6 +137,7 @@ services:
     image: comfy-ui-img
     container_name: comfy
     hostname: comfy
+    user: "1000:1000"
     build: ./comfy-ui
     networks:
       - stock-network
@@ -154,9 +158,7 @@ services:
               capabilities: [ gpu ]
     runtime: nvidia
     volumes:
-      - ../design/models:/home/user/app/models
-      - ../design/custom_nodes:/home/user/app/custom_nodes
-      - ../design/outputs:/home/user/app/outputs
+      - ./comfy-ui:/home/user/app
     restart: always
   jupyter:
     image: jupyter/minimal-notebook

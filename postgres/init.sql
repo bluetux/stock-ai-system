@@ -16,21 +16,25 @@ END $$;
 
 \c stock_data;
 
--- 📌 주가 데이터 테이블 (1년치 데이터 저장 가능)
+-- ✅ 실시간 주가 데이터 테이블
 CREATE TABLE IF NOT EXISTS stock_data (
     id SERIAL PRIMARY KEY,
     ticker VARCHAR(10) NOT NULL,
+    country VARCHAR(10) CHECK (country IN ('US', 'KR')) NOT NULL DEFAULT 'US',
     price NUMERIC(10,2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_ticker_date UNIQUE (ticker, created_at)  
 );
 
--- ✅ UNIQUE 제약 조건 추가 (기존 DB에서도 자동 적용됨)
-DO $$ 
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_ticker_date') THEN
-        ALTER TABLE stock_data ADD CONSTRAINT unique_ticker_date UNIQUE (ticker, created_at);
-    END IF;
-END $$;
+-- ✅ 과거 주가 데이터 테이블
+CREATE TABLE IF NOT EXISTS stock_history (
+    id SERIAL PRIMARY KEY,
+    ticker VARCHAR(10) NOT NULL,
+    country VARCHAR(10) CHECK (country IN ('US', 'KR')) NOT NULL DEFAULT 'US',
+    price NUMERIC(10,2) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    CONSTRAINT unique_ticker_date_history UNIQUE (ticker, created_at)
+);
 
 -- 📌 관심 종목 테이블 (별칭 & 활성화 상태 추가)
 CREATE TABLE IF NOT EXISTS watchlist (
@@ -38,10 +42,11 @@ CREATE TABLE IF NOT EXISTS watchlist (
     ticker VARCHAR(10) UNIQUE NOT NULL,
     alias VARCHAR(50) DEFAULT '',  -- ✅ 별칭 추가
     is_active BOOLEAN DEFAULT TRUE,  -- ✅ 모니터링 활성화 여부 추가
+    data_source VARCHAR(10) DEFAULT 'NAVER',  -- ✅ 데이터 소스 추가
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ✅ 기존 DB에서도 `watchlist` 테이블 변경 사항이 적용되도록 설정
+-- ✅ 기존 `watchlist` 테이블 변경 사항 적용
 DO $$ 
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'watchlist' AND column_name = 'alias') THEN
@@ -50,9 +55,12 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'watchlist' AND column_name = 'is_active') THEN
         ALTER TABLE watchlist ADD COLUMN is_active BOOLEAN DEFAULT TRUE;
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'watchlist' AND column_name = 'data_source') THEN
+        ALTER TABLE watchlist ADD COLUMN data_source VARCHAR(10) DEFAULT 'NAVER';
+    END IF;
 END $$;
 
--- 📌 AI 예측 결과 저장 테이블 (과거 데이터도 유지)
+-- 📌 AI 예측 결과 저장 테이블
 CREATE TABLE IF NOT EXISTS ai_predictions (
     id SERIAL PRIMARY KEY,
     ticker VARCHAR(10) NOT NULL,
@@ -68,35 +76,21 @@ CREATE TABLE IF NOT EXISTS quant_results (
     analysis_result NUMERIC(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
--- 주식 데이터 테이블 (미국/한국 주식 구분 추가)
-CREATE TABLE IF NOT EXISTS stock_data (
-    id SERIAL PRIMARY KEY,
-    ticker VARCHAR(10) NOT NULL,
-    country VARCHAR(10) CHECK (country IN ('US', 'KR')) NOT NULL DEFAULT 'US',
-    price NUMERIC(10,2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT unique_ticker_date UNIQUE (ticker, created_at)  -- ✅ UNIQUE 추가
-);
 
--- 주식 그룹 테이블 추가 (예: AI 관련, 방산 관련 등)
+-- 📌 주식 그룹 테이블 (예: AI 관련, 방산 관련 등)
 CREATE TABLE IF NOT EXISTS stock_groups (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL
 );
 
--- 주식과 그룹을 연결하는 테이블
+-- 📌 주식과 그룹을 연결하는 테이블
 CREATE TABLE IF NOT EXISTS stock_group_mapping (
     id SERIAL PRIMARY KEY,
     group_id INT REFERENCES stock_groups(id),
-    ticker VARCHAR(10) REFERENCES stock_data(ticker)
+    ticker VARCHAR(10) REFERENCES watchlist(ticker)
 );
 
-CREATE TABLE IF NOT EXISTS stock_groups (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
-);
-
--- 초기 그룹 데이터 추가
+-- 📌 초기 주식 그룹 데이터 추가
 INSERT INTO stock_groups (name) VALUES 
 ('AI 관련'), 
 ('방산 관련'), 
@@ -104,12 +98,12 @@ INSERT INTO stock_groups (name) VALUES
 ('반도체') 
 ON CONFLICT (name) DO NOTHING;
 
-
 -- 📌 초기 관심 종목 데이터 추가 (중복 방지)
-INSERT INTO watchlist (ticker, alias, is_active, created_at)
+INSERT INTO watchlist (ticker, alias, is_active, data_source, created_at)
 VALUES
-    ('NVDL', 'NVIDIA ETF', TRUE, NOW()),
-    ('012450.KS', '한화에어로스페이스', TRUE, NOW())
-    ('^IXIC', 'NASDAQ Composite', TRUE, NOW()),
-    ('^KQ11', 'KOSDAQ Index', TRUE, NOW())
+    ('NVDL', 'NVIDIA ETF', TRUE, 'TWELVE', NOW()),
+    ('012450.KS', '한화에어로스페이스', TRUE, 'NAVER', NOW()),
+    ('^IXIC', 'NASDAQ Composite', TRUE, 'TWELVE', NOW()),
+    ('^KQ11', 'KOSDAQ Index', TRUE, 'NAVER', NOW()),
+    ('^GSPC', 'S&P 500', TRUE, 'TWELVE', NOW())
 ON CONFLICT (ticker) DO NOTHING;
