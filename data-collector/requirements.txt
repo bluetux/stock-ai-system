@@ -1,5 +1,7 @@
 yfinance
 pandas
-psycopg2
+psycopg2-binary
 python-dotenv
 finance-datareader
+selenium
+
