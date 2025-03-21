@@ -3,6 +3,7 @@ import psycopg2
 from datetime import datetime
 from dotenv import load_dotenv
 import os
+import pandas as pd
 
 # ✅ .env 로드
 load_dotenv()
@@ -35,42 +36,57 @@ def get_watchlist():
     tickers = [ticker.replace('.KQ', '').replace('.KS', '') for ticker in tickers]
     return tickers
 
-def fetch_fdr_data(ticker: str) -> dict:
-    try:
-        df = fdr.DataReader(ticker)
-        if df is None or df.empty:
-            print(f"⚠️ {ticker} FDR 데이터 없음")
-            return None
-        latest = df.iloc[-1]
-        return {
-            "ticker": ticker,
-            "price": round(float(latest['Close']), 2),
-            "created_at": latest.name.to_pydatetime()  # datetime
-        }
-    except Exception as e:
-        print(f"❌ {ticker} FDR 데이터 가져오기 실패: {e}")
-        return None
+# def fetch_fdr_data(ticker: str) -> dict:
+#     try:
+#         df = fdr.DataReader(ticker)
+#         if df is None or df.empty:
+#             print(f"⚠️ {ticker} FDR 데이터 없음")
+#             return None
+#         latest = df.iloc[-1]
+#         return {
+#             "ticker": ticker,
+#             "price": round(float(latest['Close']), 2),
+#             "created_at": latest.name.to_pydatetime()  # datetime
+#         }
+#     except Exception as e:
+#         print(f"❌ {ticker} FDR 데이터 가져오기 실패: {e}")
+#         return None
 
 # ✅ 과거 데이터 저장 함수
 def save_stock_data(ticker, data):
-    """주어진 종목 데이터를 DB에 저장"""
+    """✅ stock_daily_data 테이블에 저장"""
     conn = get_db_connection()
     cur = conn.cursor()
 
     for date, row in data.iterrows():
-        price = float(row['Close'])
-
-        cur.execute("""
-            INSERT INTO stock_data (ticker, country, price, created_at) 
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (ticker, created_at) 
-            DO UPDATE SET price = EXCLUDED.price;
-        """, (ticker, "KR" if ticker.isdigit() else "US", price, date))
+        try:
+            cur.execute("""
+                INSERT INTO stock_daily_data (
+                    ticker, price_date, open_price, high_price, low_price, close_price, volume
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (ticker, price_date) DO UPDATE SET
+                    open_price = EXCLUDED.open_price,
+                    high_price = EXCLUDED.high_price,
+                    low_price = EXCLUDED.low_price,
+                    close_price = EXCLUDED.close_price,
+                    volume = EXCLUDED.volume;
+            """, (
+                ticker,
+                date.date(),
+                float(row['Open']) if not pd.isna(row['Open']) else None,
+                float(row['High']) if not pd.isna(row['High']) else None,
+                float(row['Low']) if not pd.isna(row['Low']) else None,
+                float(row['Close']) if not pd.isna(row['Close']) else None,
+                int(row['Volume']) if not pd.isna(row['Volume']) else None,
+            ))
+        except Exception as e:
+            print(f"⚠️ {ticker} {date} 저장 실패: {e}")
 
     conn.commit()
     cur.close()
     conn.close()
-    print(f"✅ {ticker} 데이터 저장 완료")
+    print(f"✅ {ticker} 일별 데이터 저장 완료")
+
 
 # ✅ 메인 실행 함수
 def fetch_past_data():
