@@ -8,7 +8,7 @@ FROM postgres:latest
 #     usermod -u ${PG_UID} -g ${PG_GID} postgres
 
 # 시간대 설정
-RUN apt-get update && apt-get install -y tzdata \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y tzdata \
     && ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
     && echo "Asia/Seoul" > /etc/timezone \
     && apt-get clean

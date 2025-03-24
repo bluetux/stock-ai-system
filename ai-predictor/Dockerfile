@@ -22,11 +22,11 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86
     apt-get install -y libcudnn9-cuda-12 libcudnn9-dev-cuda-12 && \
     rm -rf /var/lib/apt/lists/*
 
-    # 시간대 설정
-RUN apt-get update && apt-get install -y tzdata \
-&& ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
-&& echo "Asia/Seoul" > /etc/timezone \
-&& apt-get clean
+# # 시간대 설정
+# RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata \
+#     && ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
+#     && echo "Asia/Seoul" > /etc/timezone \
+#     && apt-get clean
 
 # ✅ Python 라이브러리 설치 (TensorFlow 버전 다운그레이드)
 RUN pip3 install --upgrade pip && \

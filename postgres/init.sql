@@ -21,11 +21,12 @@ END $$;
 -- ✅ 관심 종목 테이블
 CREATE TABLE IF NOT EXISTS watchlist (
     id SERIAL PRIMARY KEY,
-    ticker VARCHAR(10) UNIQUE NOT NULL,
+    ticker VARCHAR(20) UNIQUE NOT NULL,
     alias VARCHAR(50) DEFAULT '',
     is_active BOOLEAN DEFAULT TRUE,
     data_source VARCHAR(10) DEFAULT 'NAVER',
     is_open BOOLEAN DEFAULT TRUE,
+    region VARCHAR DEFAULT 'ETC',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -48,6 +49,7 @@ CREATE TABLE IF NOT EXISTS stock_daily_data (
     low_price NUMERIC(10, 2),
     close_price NUMERIC(10, 2),
     volume BIGINT,
+    exchange_rate DOUBLE PRECISION,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT unique_daily UNIQUE (ticker, price_date)
 );
@@ -69,25 +71,26 @@ CREATE TABLE IF NOT EXISTS quant_results (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- ✅ 주식 그룹 테이블
+-- ✅ 주식 그룹 테이블 (아이콘 포함)
 CREATE TABLE IF NOT EXISTS stock_groups (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
+    name VARCHAR(50) UNIQUE NOT NULL,
+    icon VARCHAR(50) DEFAULT ''
 );
 
--- ✅ 주식 그룹 매핑
+-- ✅ 주식 그룹 매핑 테이블
 CREATE TABLE IF NOT EXISTS stock_group_mapping (
     id SERIAL PRIMARY KEY,
     group_id INT REFERENCES stock_groups(id),
     ticker VARCHAR(20) REFERENCES watchlist(ticker)
 );
 
--- ✅ 기본 그룹 데이터 추가
-INSERT INTO stock_groups (name) VALUES
-('AI 관련'), 
-('방산 관련'), 
-('IT 대기업'), 
-('반도체') 
+-- ✅ 기본 그룹 데이터 추가 (icon도 함께)
+INSERT INTO stock_groups (name, icon) VALUES
+('AI 관련', '🧠'), 
+('방산 관련', '🚀'), 
+('IT 대기업', '💻'), 
+('반도체', '🔋') 
 ON CONFLICT (name) DO NOTHING;
 
 -- ✅ 초기 관심 종목
@@ -100,3 +103,16 @@ VALUES
     ('^GSPC', 'S&P 500', TRUE, 'NAVER', TRUE),
     ('AAPL', 'Apple Inc.', TRUE, 'NAVER', TRUE)
 ON CONFLICT (ticker) DO NOTHING;
+
+-- ✅ 종목별 region 설정
+UPDATE watchlist SET region = '한국' WHERE ticker = '012450.KS';
+UPDATE watchlist SET region = '미국' WHERE ticker IN ('AAPL', 'NVDL');
+UPDATE watchlist SET region = '지수' WHERE ticker IN ('^IXIC', '^GSPC', '^KQ11');
+
+-- ✅ 그룹-종목 매핑
+INSERT INTO stock_group_mapping (group_id, ticker) VALUES
+  (2, '012450.KS'),  -- 방산
+  (3, 'AAPL'),       -- IT 대기업
+  (1, 'NVDL'),       -- AI 관련
+  (4, 'NVDL'),       -- 반도체
+  (3, 'NVDL');       -- IT 대기업

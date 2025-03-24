@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y cron \
     && rm -rf /var/lib/apt/lists/*
 
     # 시간대 설정
-RUN apt-get update && apt-get install -y tzdata \
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata \
 && ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
 && echo "Asia/Seoul" > /etc/timezone \
 && apt-get clean

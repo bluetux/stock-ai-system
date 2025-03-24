@@ -107,6 +107,22 @@ def fetch_past_data():
     print("🪙 금값 정보 가져오는 중...")
     gold_data = fdr.DataReader('GC=F')  # ✅ GOLD/USD 대신 GC=F 사용
     save_stock_data('GC=F', gold_data)
+def fetch_usd_krw_to_db():
+    # 예: FDR 또는 외부 API에서 환율 가져오기
+    rate = 1335.25  # 예시 값
+    today = datetime.date.today()
+
+    conn = psycopg2.connect(...)
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO exchange_rate (price_date, usd_krw)
+        VALUES (%s, %s)
+        ON CONFLICT (price_date) DO UPDATE SET usd_krw = EXCLUDED.usd_krw
+    """, (today, rate))
+
+    conn.commit()
+    conn.close()
 
 if __name__ == "__main__":
     fetch_past_data()

@@ -11,12 +11,12 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - web
+      - frontend
       - jupyter
       - comfy
     restart: always
   db:
-    image: postgres-img
+    image: postgres
     container_name: db
     hostname: db
     build: ./postgres
@@ -43,7 +43,7 @@ services:
     restart: always
 
   collector:
-    image: data-collector-img
+    image: data-collector
     container_name: collector
     hostname: collector
     build: ./data-collector
@@ -62,7 +62,7 @@ services:
           cpus: "0.5"
 
   quant:
-    image: quant-analyzer-img
+    image: quant-analyzer
     container_name: quant
     hostname: quant
     build: ./quant-analyzer
@@ -81,7 +81,7 @@ services:
           cpus: "0.5"
 
   ai:
-    image: ai-predictor-img
+    image: ai-predictor
     container_name: ai
     hostname: ai
     build:
@@ -112,18 +112,41 @@ services:
       - LD_LIBRARY_PATH=/usr/local/cuda/lib64
       - XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/lib/nvidia-cuda-toolkit/libdevice
     runtime: nvidia
-
-  web:
-    image: web-interface-img
-    container_name: web
-    hostname: web
-    build: ./web-interface
+  frontend:
+    image: frontend-web
+    container_name: frontend
+    hostname: frontend
+    build: ./frontend
     networks:
       - stock-network
-    # ports:
-    #   - "5000:5000"
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_OPTIONS=--openssl-legacy-provider
+      - CHOKIDAR_USEPOLLING=true
+      - HOST=0.0.0.0
     volumes:
-      - ./web-interface:/app
+      - ./frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+    restart: always
+
+  web-api:
+    image: web-api-backend
+    container_name: web-api
+    hostname: web-api
+    build: ./web-api
+    networks:
+      - stock-network
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./web-api:/app
+    # environment:
+    #   - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_started
@@ -134,7 +157,7 @@ services:
           cpus: "0.5"
     restart: always
   comfy:
-    image: comfy-ui-img
+    image: comfy-ui
     container_name: comfy
     hostname: comfy
     user: "1000:1000"
