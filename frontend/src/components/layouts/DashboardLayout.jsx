@@ -1,19 +1,31 @@
-// src/components/layouts/DashboardLayout.jsx
-import { Outlet } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import SidebarOne from "../layouts/SidebarOne";
+import SidebarTwo from "../layouts/SidebarTwo";
 import TopNav from "../TopNav";
-import SidebarOne from "./SidebarOne";
-import SidebarTwo from "./SidebarTwo";
-
-console.log("🧱 DashboardLayout 렌더 시작");
+import { Outlet } from "react-router-dom";
 
 const DashboardLayout = () => {
+  const [groups, setGroups] = useState({});
+  const [selectedRegion, setSelectedRegion] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/groups")
+      .then((res) => res.json())
+      .then((data) => setGroups(data))
+      .catch((err) => console.error("❌ 그룹 데이터 에러:", err));
+  }, []);
+
   return (
     <div className="flex flex-col h-screen">
       <TopNav />
       <div className="flex flex-1 overflow-hidden">
-        <SidebarOne />
-        <SidebarTwo />
-        <div className="flex-1 overflow-y-auto p-4">
+        <SidebarOne
+          groups={groups}
+          selectedRegion={selectedRegion}
+          setSelectedRegion={setSelectedRegion}
+        />
+        <SidebarTwo selectedRegion={selectedRegion} groups={groups} />
+        <div className="flex-1 bg-white overflow-y-auto">
           <Outlet />
         </div>
       </div>
@@ -22,3 +34,4 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
+
