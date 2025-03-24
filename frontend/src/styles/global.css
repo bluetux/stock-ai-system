@@ -1,0 +1,6 @@
+/* 📄 src/styles/global.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 여기에 커스텀 스타일을 추가할 수 있음 */
