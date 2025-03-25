@@ -28,8 +28,8 @@ import DashboardLayout from "./components/layouts/DashboardLayout";
 import DashboardMain from "./pages/Dashboard";
 import StockDetailPage from "./pages/StockDetailPage";
 import SettingsLayout from "./components/layouts/SettingsLayout";
-import WatchlistSettingsPage from "./pages/WatchlistSettingsPage";
-import GroupSettingsPage from "./pages/GroupSettingsPage";
+import WatchlistSettingsPage from "./pages/settings/WatchlistSettingsPage";
+import GroupSettingsPage from "./pages/settings/GroupSettingsPage";
 import AccountPage from "./pages/AccountPage";
 import TopNav from "./components/TopNav";
 

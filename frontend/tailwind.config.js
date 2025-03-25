@@ -4,6 +4,9 @@ module.exports = {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}"
   ],
+  safelist: [
+    'bg-settings',
+  ],
   theme: {
     extend: {
       main: '#F9F8F6',

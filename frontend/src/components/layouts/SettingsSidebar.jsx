@@ -1,82 +1,40 @@
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ClipboardList,
-  FolderCog
-} from "lucide-react";
-import classNames from "classnames";
+import React from "react";
+import { Settings, ListChecks } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 const SettingsSidebar = () => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const navigate = useNavigate();
-  const location = useLocation();
+    return (
+        <div className="w-52 min-h-screen bg-gray-800 text-white p-4 border-r border-gray-300">
+            <h2 className="text-xl font-bold mb-6 flex items-center">
+                <Settings className="w-5 h-5 mr-2" />
+                설정 메뉴
+            </h2>
 
-  const toggleSidebar = () => setIsExpanded(!isExpanded);
+            <nav className="flex flex-col space-y-3">
+                <NavLink
+                    to="/dashboard/settings/watchlist"
+                    className={({ isActive }) =>
+                        `flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-700 text-white ${isActive ? "bg-gray-700 font-bold" : ""
+                        }`
+                    }
+                >
+                    <ListChecks className="w-4 h-4" />
+                    관심 종목 설정
+                </NavLink>
 
-  const menuItems = [
-    {
-      label: "관심종목 관리",
-      icon: ClipboardList,
-      path: "/dashboard/settings/watchlist",
-    },
-    {
-      label: "그룹 관리",
-      icon: FolderCog,
-      path: "/dashboard/settings/groups",
-    },
-  ];
-
-  return (
-    <div
-      className={classNames(
-        "flex flex-col min-h-screen text-white transition-all",
-        {
-          "w-52": isExpanded,
-          "w-16": !isExpanded,
-          "bg-settings": true,
-        }
-      )}
-    >
-      {/* 상단 타이틀 */}
-      <div className="flex items-center px-4 py-3 h-12 font-semibold text-base">
-        <span className={classNames("truncate", { "text-white": isExpanded, "text-transparent": !isExpanded })}>
-          시스템 설정
-        </span>
-      </div>
-
-      {/* 메뉴 항목 */}
-      <div className="flex-1 overflow-y-auto">
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <div
-              key={item.label}
-              className={classNames(
-                "flex items-center px-4 py-3 h-12 cursor-pointer hover:bg-white hover:bg-opacity-10",
-                { "bg-white bg-opacity-10": isActive }
-              )}
-              onClick={() => navigate(item.path)}
-            >
-              <item.icon className="w-5 h-5 mr-2 flex-shrink-0" />
-              {isExpanded && <span>{item.label}</span>}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 접기/펼치기 버튼 */}
-      <div className="flex justify-center border-t border-white border-opacity-20 p-2">
-        <button
-          className="text-white hover:text-gray-300"
-          onClick={toggleSidebar}
-        >
-          {isExpanded ? <ChevronLeft /> : <ChevronRight />}
-        </button>
-      </div>
-    </div>
-  );
+                <NavLink
+                    to="/dashboard/settings/groups"
+                    className={({ isActive }) =>
+                        `flex items-center gap-2 px-2 py-2 rounded hover:bg-gray-700 text-white ${isActive ? "bg-gray-700 font-bold" : ""
+                        }`
+                    }
+                >
+                    <ListChecks className="w-4 h-4" />
+                    그룹 설정
+                </NavLink>
+            </nav>
+        </div>
+    );
 };
 
 export default SettingsSidebar;
