@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   PawPrint,
   ChartCandlestick,
@@ -7,26 +8,28 @@ import {
 } from "lucide-react";
 
 const TopNav = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex items-center justify-between h-12 px-4 border-b border-gray-300 bg-">
-      {/* 로고 및 시스템 이름 */}
-      <div className="flex items-center space-x-2 font-bold text-lg text-black">
-        <PawPrint className="w-5 h-5" />
-        <span>우리코난 AI 시스템</span>
+    <div className="flex items-center justify-between bg-main border-b border-gray-300 px-6 py-3 shadow-sm">
+      {/* 왼쪽 - 로고 */}
+      <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+        <PawPrint className="w-6 h-6 text-black" />
+        <span className="text-lg font-semibold text-black">우리코난 AI 시스템</span>
       </div>
 
-      {/* 메뉴 항목 */}
-      <div className="flex items-center space-x-6 text-sm text-gray-800">
-        <div className="flex items-center gap-1 cursor-pointer hover:text-blue-600">
-          <ChartCandlestick className="w-4 h-4" />
+      {/* 오른쪽 - 메뉴 */}
+      <div className="flex gap-6 items-center text-sm font-medium text-gray-700">
+        <div className="flex gap-1 items-center cursor-pointer" onClick={() => navigate("/dashboard")}>
+          <ChartCandlestick size={16} />
           <span>주식 분석</span>
         </div>
-        <div className="flex items-center gap-1 cursor-pointer hover:text-blue-600">
-          <Settings className="w-4 h-4" />
+        <div className="flex gap-1 items-center cursor-pointer" onClick={() => navigate("/dashboard/settings/watchlist")}>
+          <Settings size={16} />
           <span>설정</span>
         </div>
-        <div className="flex items-center gap-1 cursor-pointer hover:text-blue-600">
-          <CircleUserRound className="w-4 h-4" />
+        <div className="flex gap-1 items-center cursor-pointer" onClick={() => navigate("/account")}>
+          <CircleUserRound size={16} />
           <span>계정</span>
         </div>
       </div>
