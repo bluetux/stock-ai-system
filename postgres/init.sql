@@ -116,7 +116,7 @@ INSERT INTO stock_group_mapping (group_id, ticker) VALUES
   (1, 'NVDL'),       -- AI 관련
   (4, 'NVDL'),       -- 반도체
   (3, 'NVDL');       -- IT 대기업
-  
+
 CREATE TABLE IF NOT EXISTS watchlist (
   id SERIAL PRIMARY KEY,
   ticker VARCHAR(20) NOT NULL,
@@ -124,4 +124,12 @@ CREATE TABLE IF NOT EXISTS watchlist (
   region VARCHAR(20),
   is_active BOOLEAN DEFAULT true,
   icon VARCHAR(50) DEFAULT 'activity'
+);
+-- (init.sql 파일 하단에 추가)
+CREATE TABLE IF NOT EXISTS watchlist_group_map (
+    watchlist_id INTEGER NOT NULL,
+    group_id INTEGER NOT NULL,
+    PRIMARY KEY (watchlist_id, group_id),
+    FOREIGN KEY (watchlist_id) REFERENCES watchlist(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES stock_groups(id) ON DELETE CASCADE
 );

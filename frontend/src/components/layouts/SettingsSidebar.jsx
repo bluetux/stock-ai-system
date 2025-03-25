@@ -1,5 +1,5 @@
 import React from "react";
-import { Settings, ListChecks } from "lucide-react";
+import { Settings, ListChecks, ListIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const SettingsSidebar = () => {
@@ -29,7 +29,7 @@ const SettingsSidebar = () => {
                         }`
                     }
                 >
-                    <ListChecks className="w-4 h-4" />
+                    <ListIcon className="w-4 h-4" />
                     그룹 설정
                 </NavLink>
             </nav>
