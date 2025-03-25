@@ -116,3 +116,12 @@ INSERT INTO stock_group_mapping (group_id, ticker) VALUES
   (1, 'NVDL'),       -- AI 관련
   (4, 'NVDL'),       -- 반도체
   (3, 'NVDL');       -- IT 대기업
+  
+CREATE TABLE IF NOT EXISTS watchlist (
+  id SERIAL PRIMARY KEY,
+  ticker VARCHAR(20) NOT NULL,
+  alias VARCHAR(50),
+  region VARCHAR(20),
+  is_active BOOLEAN DEFAULT true,
+  icon VARCHAR(50) DEFAULT 'activity'
+);
