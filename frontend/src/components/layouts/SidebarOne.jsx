@@ -24,7 +24,7 @@ const SidebarOne = ({ groups, selectedRegion, setSelectedRegion, setSelectedGrou
   return (
     <div
       className={classNames(
-        "relative flex flex-col bg-main border-r border-gray-300 min-h-screen transition-all",
+        "relative flex flex-col bg-main border-r border-gray-300 h-full transition-all",
         {
           "w-52": isExpanded,
           "w-[56px]": !isExpanded,
@@ -93,7 +93,7 @@ const SidebarOne = ({ groups, selectedRegion, setSelectedRegion, setSelectedGrou
 
       {/* 접기/펼치기 버튼 */}
       <div className="relative">
-        <div className="absolute bottom-14 right-2">
+        <div className="absolute bottom-2 right-2">
           <button
             className="p-1 border rounded bg-gray-100 hover:bg-gray-200 text-gray-600"
             onClick={toggleSidebar}

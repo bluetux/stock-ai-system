@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 
 const SettingsSidebar = () => {
     return (
-        <div className="w-52 min-h-screen bg-gray-800 text-white p-4 border-r border-gray-300">
+        <div className="w-52 h-full bg-gray-800 text-white p-4 border-r border-gray-300">
             <h2 className="text-xl font-bold mb-6 flex items-center">
                 <Settings className="w-5 h-5 mr-2" />
                 설정 메뉴

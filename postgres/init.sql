@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS watchlist (
     data_source VARCHAR(10) DEFAULT 'NAVER',
     is_open BOOLEAN DEFAULT TRUE,
     region VARCHAR DEFAULT 'ETC',
+    icon VARCHAR(50) DEFAULT 'activity',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -115,17 +116,9 @@ INSERT INTO stock_group_mapping (group_id, ticker) VALUES
   (3, 'AAPL'),       -- IT 대기업
   (1, 'NVDL'),       -- AI 관련
   (4, 'NVDL'),       -- 반도체
-  (3, 'NVDL');       -- IT 대기업
+  (3, 'NVDL')        -- IT 대기업
+ON CONFLICT DO NOTHING;
 
-CREATE TABLE IF NOT EXISTS watchlist (
-  id SERIAL PRIMARY KEY,
-  ticker VARCHAR(20) NOT NULL,
-  alias VARCHAR(50),
-  region VARCHAR(20),
-  is_active BOOLEAN DEFAULT true,
-  icon VARCHAR(50) DEFAULT 'activity'
-);
--- (init.sql 파일 하단에 추가)
 CREATE TABLE IF NOT EXISTS watchlist_group_map (
     watchlist_id INTEGER NOT NULL,
     group_id INTEGER NOT NULL,

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import * as LucideIcons from "lucide-react";
+import StockChart from "../components/StockChart";
 
 // const toPascalCase = (str) =>
 //     str
@@ -38,6 +39,9 @@ const StockDetailPage = () => {
     const [stock, setStock] = useState(null);
     const [displayCurrency, setDisplayCurrency] = useState("USD");
     const [exchangeRate, setExchangeRate] = useState(null);
+    const [activeTab, setActiveTab] = useState("price");
+    const [period, setPeriod] = useState("1D");
+    const [isLogScale, setIsLogScale] = useState(false);
 
     useEffect(() => {
         fetch(`/api/stocks/${ticker}`)
@@ -60,13 +64,31 @@ const StockDetailPage = () => {
     const finalExchangeRate = stock.exchange_rate ?? exchangeRate;
 
     return (
-        <div className="bg-main text-black min-h-screen p-6">
+        <div className="bg-main text-black h-full p-6">
             {/* 헤더 */}
             <div className="mb-6">
                 <h1 className="text-2xl font-bold mb-1">{stock.alias}</h1>
                 <div className="text-sm text-gray-500">
                     {stock.region} · {stock.ticker}
                 </div>
+            </div>
+
+            {/* 탭 메뉴 */}
+            <div className="flex gap-4 mb-4">
+                <button
+                    className={`px-4 py-2 rounded-lg ${activeTab === "price" ? "bg-blue-500 text-white" : "bg-gray-100"
+                        }`}
+                    onClick={() => setActiveTab("price")}
+                >
+                    Price
+                </button>
+                <button
+                    className={`px-4 py-2 rounded-lg ${activeTab === "market" ? "bg-blue-500 text-white" : "bg-gray-100"
+                        }`}
+                    onClick={() => setActiveTab("market")}
+                >
+                    Market cap
+                </button>
             </div>
 
             {/* ✅ 가격 및 상태 박스 */}
@@ -99,6 +121,46 @@ const StockDetailPage = () => {
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* 차트 컨트롤 */}
+            <div className="bg-white p-4 shadow rounded-lg border mb-2">
+                <div className="flex justify-between items-center">
+                    <div className="flex gap-2">
+                        {["1D", "7D", "1M", "1Y", "All"].map((p) => (
+                            <button
+                                key={p}
+                                className={`px-3 py-1 rounded ${period === p ? "bg-blue-500 text-white" : "bg-gray-100"
+                                    }`}
+                                onClick={() => setPeriod(p)}
+                            >
+                                {p}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex items-center">
+                        <label className="inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={isLogScale}
+                                onChange={(e) => setIsLogScale(e.target.checked)}
+                                className="sr-only peer"
+                            />
+                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            <span className="ms-3 text-sm font-medium text-gray-500">LOG</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {/* ✅ 차트 */}
+            <div className="bg-white p-6 shadow rounded-lg border mb-6">
+                <StockChart
+                    symbol={stock.ticker}
+                    region={stock.region}
+                    period={period}
+                    isLogScale={isLogScale}
+                />
             </div>
 
             {/* ✅ 상세 정보 박스 */}

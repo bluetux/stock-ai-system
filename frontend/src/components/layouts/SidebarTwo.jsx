@@ -32,7 +32,7 @@ const SidebarTwo = ({ selectedGroup, groups }) => {
   return (
     <div
       className={classNames(
-        "flex flex-col border-r border-gray-300 bg-white min-h-screen transition-all",
+        "flex flex-col border-r border-gray-300 bg-white h-full transition-all",
         {
           "w-64": isExpanded,
           "w-[56px]": !isExpanded,
@@ -66,7 +66,7 @@ const SidebarTwo = ({ selectedGroup, groups }) => {
 
       {/* 접기/펼치기 버튼 */}
       <div className="relative">
-        <div className="absolute bottom-14 right-2">
+        <div className="absolute bottom-2 right-2">
           <button
             className="p-1 border rounded bg-gray-100 hover:bg-gray-200 text-gray-600"
             onClick={toggleSidebar}

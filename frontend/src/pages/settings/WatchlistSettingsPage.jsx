@@ -96,7 +96,7 @@ const WatchlistSettingsPage = () => {
     );
 
   return (
-    <div className="p-6">
+    <div className="h-full p-6">
       <h2 className="text-2xl font-bold flex items-center mb-2">
         <ListChecks className="w-5 h-5 mr-2" />
         관심종목 관리

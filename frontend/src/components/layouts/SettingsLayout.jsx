@@ -4,7 +4,7 @@ import SettingsSidebar from "./SettingsSidebar";
 
 const SettingsLayout = () => {
     return (
-        <div className="flex bg-settings min-h-screen">
+        <div className="flex bg-settings h-full">
             <SettingsSidebar />
             <div className="flex-1 p-6">
                 <Outlet />
