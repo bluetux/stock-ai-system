@@ -1,0 +1,90 @@
+# version: '3.8'
+
+services:
+ 
+
+
+  quant:
+    image: quant-analyzer
+    container_name: quant
+    hostname: quant
+    build: ./quant-analyzer
+    networks:
+      - stock-network
+    volumes:
+      - ./data/processed:/data
+      - ./quant-analyzer:/app
+    depends_on:
+      collector:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+
+  ai:
+    image: ai-predictor
+    container_name: ai
+    hostname: ai
+    build:
+      context: .
+      dockerfile: ai-predictor/Dockerfile
+    networks:
+      - stock-network
+    volumes:
+      - ./data/models:/data
+      - ./ai-predictor:/app
+    depends_on:
+      quant:
+        condition: service_started
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+        limits:
+          memory: 4G
+          cpus: "1"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - CUDA_HOME=/usr/local/cuda
+      - LD_LIBRARY_PATH=/usr/local/cuda/lib64
+      - XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/lib/nvidia-cuda-toolkit/libdevice
+    runtime: nvidia
+ 
+ 
+  comfy:
+    image: comfy-ui
+    container_name: comfy
+    hostname: comfy
+    user: "1000:1000"
+    build: ./comfy-ui
+    networks:
+      - stock-network
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - COMFYUI_LOAD_CUSTOM_NODES=1
+    # ports:
+    #   - 7860:7860
+    deploy:
+      resources:
+        limits:
+          memory: 20G
+          cpus: "4"
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    runtime: nvidia
+    volumes:
+      - ./comfy-ui:/home/user/app
+    restart: always
+
+networks:
+  stock-network:
+    driver: bridge

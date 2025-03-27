@@ -9,10 +9,10 @@ import pandas as pd
 load_dotenv()
 
 # ✅ 환경 변수에서 DB 정보 가져오기
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "db")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "admin")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "securepassword")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "stock_data")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", )
+POSTGRES_USER = os.getenv("POSTGRES_USER", )
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", )
+POSTGRES_DB = os.getenv("POSTGRES_DB", )
 
 # ✅ DB 연결 함수
 def get_db_connection():

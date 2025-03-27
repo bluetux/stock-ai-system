@@ -42,6 +42,7 @@ const StockDetailPage = () => {
     const [activeTab, setActiveTab] = useState("price");
     const [period, setPeriod] = useState("1D");
     const [isLogScale, setIsLogScale] = useState(false);
+    const [minuteInterval, setMinuteInterval] = useState(5);
 
     useEffect(() => {
         fetch(`/api/stocks/${ticker}`)
@@ -62,6 +63,14 @@ const StockDetailPage = () => {
     }
 
     const finalExchangeRate = stock.exchange_rate ?? exchangeRate;
+
+    const periodButtons = [
+        { value: "5min", label: "5분봉" },
+        { value: "1day", label: "일봉" },
+        { value: "3M", label: "3개월" },
+        { value: "1Y", label: "1년" },
+        { value: "ALL", label: "전체" }
+    ];
 
     return (
         <div className="bg-main text-black h-full p-6">
@@ -126,29 +135,39 @@ const StockDetailPage = () => {
             {/* 차트 컨트롤 */}
             <div className="bg-white p-4 shadow rounded-lg border mb-2">
                 <div className="flex justify-between items-center">
-                    <div className="flex gap-2">
-                        {["1D", "7D", "1M", "1Y", "All"].map((p) => (
-                            <button
-                                key={p}
-                                className={`px-3 py-1 rounded ${period === p ? "bg-blue-500 text-white" : "bg-gray-100"
-                                    }`}
-                                onClick={() => setPeriod(p)}
-                            >
-                                {p}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="flex items-center">
-                        <label className="inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={isLogScale}
-                                onChange={(e) => setIsLogScale(e.target.checked)}
-                                className="sr-only peer"
-                            />
-                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            <span className="ms-3 text-sm font-medium text-gray-500">LOG</span>
-                        </label>
+                    <div className="flex gap-4">
+                        {/* 캔들스틱 차트 기간 */}
+                        <div className="flex items-center gap-4">
+                            <div className="flex gap-2">
+                                {periodButtons.map((button) => (
+                                    <button
+                                        key={button.value}
+                                        className={`px-3 py-1 rounded ${period === button.value
+                                            ? "bg-blue-500 text-white"
+                                            : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                            }`}
+                                        onClick={() => setPeriod(button.value)}
+                                    >
+                                        {button.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        {/* 구분선 */}
+                        <div className="border-r border-gray-300"></div>
+                        {/* 라인 차트 기간 */}
+                        <div className="flex items-center">
+                            <label className="inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={isLogScale}
+                                    onChange={(e) => setIsLogScale(e.target.checked)}
+                                    className="sr-only peer"
+                                />
+                                <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                <span className="ms-3 text-sm font-medium text-gray-500">LOG</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>

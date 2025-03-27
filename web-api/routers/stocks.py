@@ -86,33 +86,116 @@ def get_stock_history(
 ):
     """기간별 주가 데이터 조회"""
     try:
-        if period == "1D":
-            query = text("""
-                SELECT
-                    created_at as timestamp,
-                    price
-                FROM stock_prices
-                WHERE ticker = :ticker
-                AND created_at >= :start_time
-                ORDER BY created_at
-            """)
-            
-            start_time = datetime.now() - timedelta(days=1)
-            result = db.execute(query, {"ticker": ticker, "start_time": start_time})
-            rows = result.fetchall()
-            
-            # Convert to list of dicts and add volume=0 for 1D data
-            data = [{"timestamp": row[0], "price": float(row[1]), "volume": 0} for row in rows]
-        else:
-            if period == "7D":
-                start_time = datetime.now() - timedelta(days=7)
-            elif period == "1M":
-                start_time = datetime.now() - timedelta(days=30)
-            elif period == "1Y":
-                start_time = datetime.now() - timedelta(days=365)
-            else:  # All
-                start_time = datetime(2000, 1, 1)
-            
+        # 5분봉 데이터 (stock_prices 테이블)
+        if period == "5min":
+            try:
+                # 먼저 데이터가 있는지 확인
+                check_query = text("""
+                    SELECT COUNT(*) as cnt
+                    FROM stock_prices
+                    WHERE ticker = :ticker
+                    AND created_at >= :start_time
+                """)
+                
+                start_time = datetime.now() - timedelta(hours=8)
+                print(f"Checking data for ticker={ticker}, start_time={start_time}")
+                
+                count = db.execute(check_query, {
+                    "ticker": ticker,
+                    "start_time": start_time
+                }).scalar()
+                
+                print(f"Found {count} rows for the period")
+                
+                if count == 0:
+                    return {"error": "데이터가 없습니다.", "details": f"Ticker: {ticker}, Period: {period}, Start Time: {start_time}"}
+                
+                # 데이터가 있으면 N개씩 그룹화하여 OHLC 계산
+                query = text("""
+                    WITH groups AS (
+                        SELECT
+                            created_at as timestamp,
+                            price,
+                            -- 캔들스틱 그룹화 크기 설정
+                            -- 아래 숫자를 조정하여 한 캔들에 포함될 데이터 수를 변경할 수 있습니다.
+                            -- 예: 10개 데이터 = 50분 단위 캔들
+                            -- 현재: 5개 데이터 = 25분 단위 캔들
+                            FLOOR((ROW_NUMBER() OVER (ORDER BY created_at) - 1) / 5) as group_id
+                        FROM stock_prices
+                        WHERE ticker = :ticker
+                        AND created_at >= :start_time
+                    ),
+                    group_stats AS (
+                        SELECT DISTINCT
+                            group_id,
+                            FIRST_VALUE(timestamp) OVER (PARTITION BY group_id ORDER BY timestamp) as timestamp,
+                            FIRST_VALUE(price) OVER (PARTITION BY group_id ORDER BY timestamp) as open,
+                            LAST_VALUE(price) OVER (PARTITION BY group_id ORDER BY timestamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as close,
+                            MAX(price) OVER (PARTITION BY group_id) as high,
+                            MIN(price) OVER (PARTITION BY group_id) as low
+                        FROM groups
+                    )
+                    SELECT
+                        timestamp,
+                        open,
+                        high,
+                        low,
+                        close
+                    FROM group_stats
+                    ORDER BY timestamp
+                """)
+                
+                print("Executing OHLC query...")
+                result = db.execute(query, {
+                    "ticker": ticker,
+                    "start_time": start_time
+                })
+                
+                try:
+                    rows = result.mappings().all()
+                    print(f"Query executed successfully. Found {len(rows)} grouped records")
+                    
+                    data = [{
+                        "timestamp": row['timestamp'],
+                        "open": float(row['open']),
+                        "high": float(row['high']),
+                        "low": float(row['low']),
+                        "close": float(row['close']),
+                        "volume": 0
+                    } for row in rows]
+                    
+                    print(f"Data processed successfully. First record: {data[0] if data else 'No data'}")
+                    return data
+                    
+                except Exception as e:
+                    print(f"Error processing query results: {str(e)}")
+                    print(f"Result object: {result}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail={
+                            "error": f"데이터 처리 중 오류 발생: {str(e)}",
+                            "location": "result processing"
+                        }
+                    )
+                
+            except Exception as e:
+                print(f"Error in 5min data processing: {str(e)}")
+                print(f"Full error details: {e.__class__.__name__}: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail={
+                        "error": f"5분봉 데이터 처리 중 오류 발생: {str(e)}",
+                        "error_type": e.__class__.__name__,
+                        "query_params": {
+                            "ticker": ticker,
+                            "period": period,
+                            "start_time": str(start_time)
+                        }
+                    }
+                )
+
+        # 일봉 데이터 (stock_daily_data 테이블, 그대로 사용)
+        elif period == "1day":
             query = text("""
                 SELECT 
                     price_date as timestamp,
@@ -120,6 +203,116 @@ def get_stock_history(
                     high_price as high,
                     low_price as low,
                     close_price as close,
+                    COALESCE(volume, 0) as volume
+                FROM stock_daily_data
+                WHERE ticker = :ticker
+                AND price_date >= :start_time
+                ORDER BY price_date
+            """)
+            
+            start_time = datetime.now() - timedelta(days=60)  # 60일치 데이터
+            result = db.execute(query, {"ticker": ticker, "start_time": start_time}).mappings().all()
+            data = [{
+                "timestamp": row['timestamp'],
+                "open": float(row['open']),
+                "high": float(row['high']),
+                "low": float(row['low']),
+                "close": float(row['close']),
+                "volume": float(row['volume'])
+            } for row in result]
+
+        # 주봉 데이터
+        elif period == "1week":
+            query = text("""
+                WITH weekly AS (
+                    SELECT 
+                        date_trunc('week', price_date) as week_start,
+                        MIN(price_date) as first_date,
+                        MAX(price_date) as last_date,
+                        FIRST_VALUE(open_price) OVER (PARTITION BY date_trunc('week', price_date) ORDER BY price_date) as open_price,
+                        MAX(high_price) as high_price,
+                        MIN(low_price) as low_price,
+                        LAST_VALUE(close_price) OVER (PARTITION BY date_trunc('week', price_date) ORDER BY price_date) as close_price,
+                        SUM(volume) as volume
+                    FROM stock_daily_data
+                    WHERE ticker = :ticker
+                    AND price_date >= :start_time
+                    GROUP BY date_trunc('week', price_date), price_date, open_price, close_price
+                )
+                SELECT DISTINCT
+                    last_date as timestamp,
+                    open_price as open,
+                    high_price as high,
+                    low_price as low,
+                    close_price as close,
+                    volume
+                FROM weekly
+                ORDER BY last_date
+            """)
+            
+            start_time = datetime.now() - timedelta(days=365)  # 1년치 데이터
+            result = db.execute(query, {"ticker": ticker, "start_time": start_time}).mappings().all()
+            data = [{
+                "timestamp": row['timestamp'],
+                "open": float(row['open']),
+                "high": float(row['high']),
+                "low": float(row['low']),
+                "close": float(row['close']),
+                "volume": float(row['volume'])
+            } for row in result]
+
+        # 월봉 데이터
+        elif period == "1month":
+            query = text("""
+                WITH monthly AS (
+                    SELECT 
+                        date_trunc('month', price_date) as month_start,
+                        MIN(price_date) as first_date,
+                        MAX(price_date) as last_date,
+                        FIRST_VALUE(open_price) OVER (PARTITION BY date_trunc('month', price_date) ORDER BY price_date) as open_price,
+                        MAX(high_price) as high_price,
+                        MIN(low_price) as low_price,
+                        LAST_VALUE(close_price) OVER (PARTITION BY date_trunc('month', price_date) ORDER BY price_date) as close_price,
+                        SUM(volume) as volume
+                    FROM stock_daily_data
+                    WHERE ticker = :ticker
+                    AND price_date >= :start_time
+                    GROUP BY date_trunc('month', price_date), price_date, open_price, close_price
+                )
+                SELECT DISTINCT
+                    last_date as timestamp,
+                    open_price as open,
+                    high_price as high,
+                    low_price as low,
+                    close_price as close,
+                    volume
+                FROM monthly
+                ORDER BY last_date
+            """)
+            
+            start_time = datetime.now() - timedelta(days=365*5)  # 5년치 데이터
+            result = db.execute(query, {"ticker": ticker, "start_time": start_time}).mappings().all()
+            data = [{
+                "timestamp": row['timestamp'],
+                "open": float(row['open']),
+                "high": float(row['high']),
+                "low": float(row['low']),
+                "close": float(row['close']),
+                "volume": float(row['volume'])
+            } for row in result]
+
+        # 라인 차트용 데이터 (stock_daily_data)
+        else:
+            if period == "3M":
+                start_time = datetime.now() - timedelta(days=90)
+            elif period == "1Y":
+                start_time = datetime.now() - timedelta(days=365)
+            else:  # ALL
+                start_time = datetime(2000, 1, 1)
+            
+            query = text("""
+                SELECT 
+                    price_date as timestamp,
                     close_price as price,
                     COALESCE(volume, 0) as volume
                 FROM stock_daily_data
@@ -128,25 +321,12 @@ def get_stock_history(
                 ORDER BY price_date
             """)
 
-            # 주가 데이터 조회
-            result = db.execute(query, {
-                "ticker": ticker,
-                "start_time": start_time
-            }).mappings().all()
-            
-            # DataFrame 생성 및 기술적 지표 계산
-            if result:
-                data = [{
-                    "timestamp": row['timestamp'],
-                    "open": float(row['open']),
-                    "high": float(row['high']),
-                    "low": float(row['low']),
-                    "close": float(row['close']),
-                    "price": float(row['price']),
-                    "volume": float(row['volume'])
-                } for row in result]
-            else:
-                data = []
+            result = db.execute(query, {"ticker": ticker, "start_time": start_time}).mappings().all()
+            data = [{
+                "timestamp": row['timestamp'],
+                "price": float(row['price']),
+                "volume": float(row['volume'])
+            } for row in result]
         
         if not data:
             return {"error": "No data found"}
@@ -164,25 +344,26 @@ def get_stock_history(
         df[numeric_columns] = df[numeric_columns].round(2)
         
         # AI 예측 데이터 조회 (있는 경우)
-        pred_query = text("""
-            SELECT 
-                created_at as timestamp,
-                predicted_price
-            FROM ai_predictions
-            WHERE ticker = :ticker
-            AND created_at >= :start_time
-            ORDER BY created_at
-        """)
-        
-        predictions = db.execute(pred_query, {
-            "ticker": ticker,
-            "start_time": start_time
-        }).mappings().all()
-        
-        if predictions:
-            pred_df = pd.DataFrame(predictions)
-            df = pd.merge(df, pred_df, on='timestamp', how='left')
-            df['predicted_price'] = df['predicted_price'].round(2)
+        if period not in ["5min"]:  # 5분봉 데이터에는 예측 데이터 제외
+            pred_query = text("""
+                SELECT 
+                    created_at as timestamp,
+                    predicted_price
+                FROM ai_predictions
+                WHERE ticker = :ticker
+                AND created_at >= :start_time
+                ORDER BY created_at
+            """)
+            
+            predictions = db.execute(pred_query, {
+                "ticker": ticker,
+                "start_time": start_time
+            }).mappings().all()
+            
+            if predictions:
+                pred_df = pd.DataFrame(predictions)
+                df = pd.merge(df, pred_df, on='timestamp', how='left')
+                df['predicted_price'] = df['predicted_price'].round(2)
         
         return df.to_dict('records')
     except Exception as e:

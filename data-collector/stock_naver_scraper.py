@@ -128,8 +128,7 @@ def fetch_foreign_stock_naver(symbol: str):
     return None
 
 # ✅ 종목 타입에 따라 크롤링 분기
-
-def fetch_stock_data(symbol: str):
+def fetch_stock_data(symbol: str, region: str = None):
     """✅ 한국 주식 / 국내 지수 / 해외 주식 구분하여 크롤링 (with retry)"""
     symbol = convert_symbol_for_naver(symbol)
     korea_index_symbols = [".KQ11", ".KS11"]
@@ -137,7 +136,7 @@ def fetch_stock_data(symbol: str):
 
     if symbol in korea_index_symbols:
         return fetch_korea_index_naver(symbol)
-    elif "." in symbol and not symbol.endswith(".O") and symbol not in foreign_index_symbols:
+    elif region and region.lower() in ["kr", "한국"]:
         return fetch_korea_stock_naver(symbol)
     else:
         return retry_fetch_foreign_stock(symbol)  # ✅ 해외 주식은 retry 포함

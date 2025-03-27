@@ -25,11 +25,11 @@ def get_db_connection():
 def get_watchlist_symbols():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT ticker, is_open FROM watchlist WHERE is_active = TRUE;")
+    cur.execute("SELECT ticker, is_open, region FROM watchlist WHERE is_active = TRUE;")
     result = cur.fetchall()
     cur.close()
     conn.close()
-    return result  # [(ticker, is_open), ...]
+    return result  # [(ticker, is_open, region), ...]
 
 def update_open_flag(ticker, is_open):
     conn = get_db_connection()
@@ -51,13 +51,18 @@ def run_naver_scraper():
     print(f"🇺🇸 미국장: {'🟢 열림' if market_status['US'] else '🔴 마감'} ({datetime.now().strftime('%H:%M')})")
     print("✅ 장이 열려 있음! 실시간 크롤링 실행 가능.")
 
-    for ticker, is_open_flag in get_watchlist_symbols():
-        data = fetch_stock_data(ticker)
+    for ticker, is_open_flag, region in get_watchlist_symbols():
+        data = fetch_stock_data(ticker, region)
         if not data:
             continue
 
         symbol = data.get("symbol") or data.get("ticker")
-        market = "KR" if ".KS" in symbol or ".KQ" in symbol or "^KQ" in symbol else "US"
+        if region.lower() in ["kr", "한국"]:
+            market = "KR"
+        elif region.lower() in ["us", "미국"]:
+            market = "US"
+        else:
+            market = "KR" if ".KS" in symbol or ".KQ" in symbol or "^KQ" in symbol else "US"
         is_market_open = market_status[market]
 
         if is_open_flag and is_market_open:
