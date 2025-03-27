@@ -132,6 +132,7 @@ services:
     tty: true
     restart: always
 
+
   web-api:
     image: web-api-backend
     container_name: web-api

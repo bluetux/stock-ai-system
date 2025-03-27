@@ -60,7 +60,25 @@ services:
         limits:
           memory: 1G
           cpus: "0.5"
-
+  frontend:
+    image: frontend-web
+    container_name: frontend
+    hostname: frontend
+    build: ./frontend
+    networks:
+      - stock-network
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_OPTIONS=--openssl-legacy-provider
+      - CHOKIDAR_USEPOLLING=true
+      - HOST=0.0.0.0
+    volumes:
+      - ./frontend:/app
+      # - /app/node_modules
+    stdin_open: true
+    tty: true
+    restart: always
   web-api:
     image: web-api-backend
     container_name: web-api
