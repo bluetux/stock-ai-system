@@ -13,7 +13,7 @@ services:
     depends_on:
       - frontend
       # - jupyter
-      - comfy
+      # - comfy
     restart: always
   db:
     image: postgres
